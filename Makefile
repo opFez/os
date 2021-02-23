@@ -18,7 +18,7 @@ $(SECTOR2): sec2.asm io.asm
 .PHONY: run clean
 run: $(OS_DISK)
 	qemu-system-i386 -gdb tcp::26000 -S -no-reboot -monitor stdio -machine q35 \
-	    -drive file=$(OS_DISK),format=raw,index=0 &
+	    -drive file=$(OS_DISK),format=raw,index=0,media=disk &
 	gdb -q
 
 clean:
