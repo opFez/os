@@ -2,7 +2,6 @@ org 0x7c00
 bits 16
 jmp boot
 
-%include "io.asm"
 %include "gdt.asm"
 
 boot:
@@ -59,6 +58,57 @@ sec2_load_error:
 	mov al, 'e'
 	int 0x10
 	jmp hang
+
+;; io code (clear screen)
+%define ROWS 24
+%define COLS 79
+clear_scr:
+	pusha
+	xor dx, dx
+	; bx specifies page or smth
+	xor bx, bx
+
+	; put cursor to topleft
+	mov ah, 0x02
+	int 0x10
+	; ready for printing
+	mov ah, 0x0e
+	mov al, ' '
+clear_scr_loop:
+	; write spaces until at the end of page
+	cmp dh, ROWS
+	je clear_scr_finished
+	cmp dl, COLS
+	je clear_scr_newline
+
+	add dl, 1
+	int 0x10
+	jmp clear_scr_loop
+clear_scr_newline:
+	call newline
+	xor dl, dl
+	add dh, 1
+	jmp clear_scr_loop
+clear_scr_finished:
+	mov ah, 0x02
+	xor dx, dx
+	int 0x10
+
+	popa
+	ret
+
+;; prints \r\n
+newline:
+	pusha
+	mov ah, 0x0e
+	mov al, 0x0d
+	int 0x10
+	mov al, 0x0a
+	int 0x10
+	popa
+	ret
+
+
 
 hang:
 	jmp $
