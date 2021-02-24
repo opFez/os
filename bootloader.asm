@@ -1,6 +1,7 @@
-org 0x7c00
+; handled by link.ld
+;org 0x7c00
 bits 16
-jmp boot
+	jmp boot
 
 %include "gdt.asm"
 
