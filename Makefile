@@ -1,19 +1,19 @@
-BOOTLOADER=bootloader.o
-SECTOR2=sec2.o
+BOOTLOADER=bootloader.bin
+KERNEL=kernel.bin
 OS_DISK=os.img
 
 all: $(OS_DISK) $(DATA_DISK)
 
-$(OS_DISK): $(BOOTLOADER) $(SECTOR2) #(OS)
+$(OS_DISK): $(BOOTLOADER) $(KERNEL)
 	dd if=/dev/zero of=$(OS_DISK) bs=512 count=2880
 	dd conv=notrunc if=$(BOOTLOADER) of=$(OS_DISK) bs=512 count=1 seek=0
-	dd conv=notrunc if=$(SECTOR2) of=$(OS_DISK) bs=512 count=1 seek=1
+	dd conv=notrunc if=$(KERNEL) of=$(OS_DISK) bs=512 count=4 seek=1
 
 $(BOOTLOADER): bootloader.asm gdt.asm
-	nasm bootloader.asm -o $@
+	nasm -f bin bootloader.asm -o $@
 
-$(SECTOR2): sec2.asm
-	nasm sec2.asm -o $@
+$(KERNEL): kernel.asm
+	nasm -f bin kernel.asm -o $@
 
 .PHONY: run clean
 run: $(OS_DISK)
@@ -22,4 +22,4 @@ run: $(OS_DISK)
 	gdb -q
 
 clean:
-	rm *.o *.img
+	rm *.bin *.img

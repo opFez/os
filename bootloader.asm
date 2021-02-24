@@ -7,7 +7,9 @@ jmp boot
 boot:
 	cli ; no hardware interrupts
 
-	call clear_scr
+	call set_video_mode ; sets video mode
+	                    ; also clears screen
+
 	mov ax, 0x100
 	mov es, ax
 
@@ -17,7 +19,7 @@ boot:
 	mov ch, 0
 	mov cl, 2
 	mov dh, 0
-	mov dl, 0x80
+	mov dl, 0x80 ; this is for floppy. apparently it's just 0 for hard drives
 	clc
 	int 0x13
 	jc sec2_load_error
@@ -47,7 +49,7 @@ start_pm:
 	mov fs, ax
 	mov gs, ax
 
-	mov [0xb8000], byte 'a'
+	; jump to sector 2 of our floppy
 	jmp CODE_SEG:0x1000
 
 	jmp hang
@@ -59,56 +61,17 @@ sec2_load_error:
 	int 0x10
 	jmp hang
 
-;; io code (clear screen)
-%define ROWS 24
-%define COLS 79
-clear_scr:
+;; clear screen by switching to text mode 1 and back to 3
+set_video_mode:
 	pusha
-	xor dx, dx
-	; bx specifies page or smth
-	xor bx, bx
-
-	; put cursor to topleft
-	mov ah, 0x02
+	mov ah, 0
+	mov al, 1
 	int 0x10
-	; ready for printing
-	mov ah, 0x0e
-	mov al, ' '
-clear_scr_loop:
-	; write spaces until at the end of page
-	cmp dh, ROWS
-	je clear_scr_finished
-	cmp dl, COLS
-	je clear_scr_newline
-
-	add dl, 1
-	int 0x10
-	jmp clear_scr_loop
-clear_scr_newline:
-	call newline
-	xor dl, dl
-	add dh, 1
-	jmp clear_scr_loop
-clear_scr_finished:
-	mov ah, 0x02
-	xor dx, dx
-	int 0x10
-
-	popa
-	ret
-
-;; prints \r\n
-newline:
-	pusha
-	mov ah, 0x0e
-	mov al, 0x0d
-	int 0x10
-	mov al, 0x0a
+	; we're using 80*25 16 color text mode
+	mov al, 3
 	int 0x10
 	popa
 	ret
-
-
 
 hang:
 	jmp $
