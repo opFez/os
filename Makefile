@@ -1,5 +1,6 @@
 CROSS=cross/bin/i386-elf-
 CC=$(CROSS)gcc
+CFLAGS= -ffreestanding -Wall -Wextra
 LD=$(CROSS)ld
 AS=nasm
 
@@ -25,8 +26,16 @@ $(OS): $(BOOTLOADER) $(KERNEL)
 $(BOOTLOADER): bootloader.asm gdt.asm
 	$(AS) -felf32 bootloader.asm -o $@
 
-$(KERNEL): kernel.asm
+$(KERNEL): kernel.asm.o kernel.c.o
+	$(LD) -melf_i386 -Ttext 0x100 kernel.asm.o kernel.c.o -o $@
+
+.PHONY: kernel.asm.o
+kernel.asm.o:
 	$(AS) -felf32 kernel.asm -o $@
+
+kernel.c.o: kernel.c
+	$(CC) $(CFLAGS) -c kernel.c -o $@
+
 
 .PHONY: run clean
 run: $(OS_DISK)

@@ -1,0 +1,2 @@
+kprint doesn't support long strings.
+kprint doesn't support char *, only char[] (what??).
